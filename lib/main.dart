@@ -37,6 +37,8 @@ class _MainPageState extends State<MainPage> {
   int currentIndex = 0;
   int points = 0;
 
+  String rockName = "我的俗頭";
+
   String equippedRock = "assets/rock/rock01.png";
   String? equippedHat;
   String? equippedEyes;
@@ -46,6 +48,11 @@ class _MainPageState extends State<MainPage> {
     await prefs.setString('equippedRock', equippedRock);
     await prefs.setString('equippedHat', equippedHat ?? '');
     await prefs.setString('equippedEyes', equippedEyes ?? '');
+  }
+
+  Future<void> saveRockName() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('rockName', rockName);
   }
 
   Future<void> loadEquip() async {
@@ -59,6 +66,7 @@ class _MainPageState extends State<MainPage> {
 
       equippedHat = hat.isEmpty ? null : hat;
       equippedEyes = eyes.isEmpty ? null : eyes;
+      rockName = prefs.getString('rockName') ?? "俗頭養成記";
     });
   }
 
@@ -71,17 +79,28 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      TaskPage(
-        points: points,
-        onPointsChanged: (newPoints) {
-          setState(() {
-            points = newPoints;
-          });
-        },
-        equippedRock: equippedRock,
-        equippedHat: equippedHat,
-        equippedEyes: equippedEyes,
-      ),
+    TaskPage(
+      points: points,
+
+      // 🔥👇 一定要加這兩個
+      rockName: rockName,
+      onRockNameChanged: (newName) {
+        setState(() {
+          rockName = newName;
+        });
+        saveRockName(); // 🔥 存本地
+      },
+
+      onPointsChanged: (newPoints) {
+        setState(() {
+          points = newPoints;
+        });
+      },
+
+      equippedRock: equippedRock,
+      equippedHat: equippedHat,
+      equippedEyes: equippedEyes,
+    ),
       CalendarPage(),
       ShopPage(
       points: points,

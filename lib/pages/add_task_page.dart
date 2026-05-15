@@ -9,11 +9,12 @@ class AddTaskPage extends StatefulWidget {
   _AddTaskPageState createState() => _AddTaskPageState();
 }
 
-
 class _AddTaskPageState extends State<AddTaskPage> {
   TextEditingController controller = TextEditingController();
 
   String selectedType = "daily"; // 👈 新增這行（控制選單）
+
+  List<int> selectedDays = []; // 🔥 自訂星期（1~7）
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
             onPressed: () {
               Navigator.pop(context); // 👈 手動離開
             },
-          )
+          ),
         ],
       ),
       body: Padding(
@@ -49,14 +50,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
             DropdownButton<String>(
               value: selectedType,
               items: [
-                DropdownMenuItem(
-                  value: "daily",
-                  child: Text("每日"),
-                ),
-                DropdownMenuItem(
-                  value: "one-time",
-                  child: Text("單次"),
-                ),
+                DropdownMenuItem(value: "daily", child: Text("每日")),
+                DropdownMenuItem(value: "one-time", child: Text("單次")),
+                DropdownMenuItem(value: "custom", child: Text("自訂重複")),
               ],
               onChanged: (value) {
                 setState(() {
@@ -67,20 +63,66 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
             SizedBox(height: 20),
 
+            // 🔥 自訂星期選擇（只有 custom 才顯示）
+            if (selectedType == "custom") ...[
+              Text("每週", style: TextStyle(fontSize: 16)),
+
+              SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: List.generate(7, (index) {
+                  int day = index + 1;
+
+                  return ChoiceChip(
+                    label: Text(["一", "二", "三", "四", "五", "六", "日"][index]),
+                    selected: selectedDays.contains(day),
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          selectedDays.add(day);
+                        } else {
+                          selectedDays.remove(day);
+                        }
+                      });
+                    },
+                  );
+                }),
+              ),
+            ],
+
+            SizedBox(height: 30),
+
             // 新增按鈕
             ElevatedButton(
               onPressed: () {
-
                 // 🔥 空白防呆
                 if (controller.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("請輸入任務名稱",style: TextStyle(color: Colors.white)),
+                      content: Text(
+                        "請輸入任務名稱",
+                        style: TextStyle(color: Colors.white),
+                      ),
                       duration: Duration(seconds: 1),
                       backgroundColor: const Color.fromARGB(255, 239, 74, 20),
                       shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                  );
+                  return;
+                }
+
+                // 🔥🔥 加在這裡（限制至少選一天）
+                if (selectedType == "custom" && selectedDays.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "請至少選擇一天",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      duration: Duration(seconds: 1),
+                      backgroundColor: Color.fromARGB(255, 239, 74, 20),
                     ),
                   );
                   return;
@@ -89,6 +131,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 final newTask = {
                   "title": controller.text,
                   "type": selectedType,
+                  "customDays": List<int>.from(selectedDays),
                   "doneDates": [],
                   "hiddenDates": [],
                   "createdDate": DateTime.now().toString(),
@@ -103,7 +146,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 // 👉 成功提示
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("新增成功",style: TextStyle(color: Colors.white)),
+                    content: Text(
+                      "新增成功",
+                      style: TextStyle(color: Colors.white),
+                    ),
                     duration: Duration(milliseconds: 800),
                     backgroundColor: const Color.fromARGB(255, 246, 179, 36),
                     shape: RoundedRectangleBorder(

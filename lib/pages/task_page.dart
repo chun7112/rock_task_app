@@ -5,6 +5,8 @@ import 'add_task_page.dart';
 
 class TaskPage extends StatefulWidget {
   final int points;
+  final String rockName; // 🔥 新增
+  final Function(String) onRockNameChanged;
   final String? equippedRock;
   final String? equippedHat;
   final String? equippedEyes;
@@ -13,7 +15,9 @@ class TaskPage extends StatefulWidget {
   const TaskPage({
     super.key,
     required this.points,
-    required this.onPointsChanged, // 🔥 這行是關鍵
+    required this.rockName,
+    required this.onRockNameChanged,
+    required this.onPointsChanged,
     this.equippedRock,
     this.equippedHat,
     this.equippedEyes,
@@ -37,12 +41,10 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget buildCalendar() {
-    DateTime baseWeek =
-      selectedDate.subtract(Duration(days: selectedDate.weekday - 1));
-
-    DateTime startOfWeek =
-        baseWeek.add(Duration(days: weekOffset * 7));
-          
+    DateTime baseDate = selectedDate;
+    DateTime startOfWeek = baseDate.subtract(
+      Duration(days: baseDate.weekday - 1),
+    );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -64,9 +66,7 @@ class _TaskPageState extends State<TaskPage> {
             ),
             child: Column(
               children: [
-                Text(
-                  ["一", "二", "三", "四", "五", "六", "日"][index],
-                ),
+                Text(["一", "二", "三", "四", "五", "六", "日"][index]),
                 Text("${day.day}"),
               ],
             ),
@@ -78,8 +78,6 @@ class _TaskPageState extends State<TaskPage> {
 
   String? equippedHat;
   String? equippedEyes;
-
-  
 
   int getTodayTotalTasks() {
     return tasks.where((task) {
@@ -121,6 +119,13 @@ class _TaskPageState extends State<TaskPage> {
       for (var task in tasks) {
         task["doneDates"] ??= [];
         task["hiddenDates"] ??= [];
+
+        // 🔥🔥🔥 這段是關鍵（修 customDays 型別）
+        if (task["type"] == "custom") {
+          task["customDays"] = (task["customDays"] ?? [])
+              .map((e) => int.parse(e.toString()))
+              .toList();
+        }
       }
     }
 
@@ -132,7 +137,6 @@ class _TaskPageState extends State<TaskPage> {
     super.initState();
     loadTasks();
 
-    // 🔥 測試用（之後會改成商店控制）
     equippedHat = 'assets/rock2.png';
     equippedEyes = 'assets/rock3.png';
   }
@@ -151,23 +155,83 @@ class _TaskPageState extends State<TaskPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("俗頭養成記")),
+      appBar: AppBar(
+        centerTitle: true,
+
+        title: Row(
+          mainAxisSize: MainAxisSize.min, // 🔥 讓整塊只包內容（很重要）
+          children: [
+            Text(
+              widget.rockName,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+
+            SizedBox(width: 6), // 👉 字跟icon間距
+
+            GestureDetector(
+              onTap: () {
+                TextEditingController controller = TextEditingController(
+                  text: widget.rockName,
+                );
+
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text("修改名稱"),
+                      content: TextField(controller: controller),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text("取消"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            String newName = controller.text.trim(); // 🔥 去空白
+
+                            if (newName.length > 10) {
+                              newName = newName.substring(0, 10);
+                            }
+
+                            if (newName.isEmpty) {
+                              newName = "俗頭養成記"; // 🔥 預設名稱
+                            }
+
+                            widget.onRockNameChanged(newName);
+
+                            Navigator.pop(context);
+                          },
+                          child: Text("確定"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+
+              child: Icon(Icons.edit, size: 18),
+            ),
+          ],
+        ),
+      ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AddTaskPage(
-              onAddTask: (newTask) {
-                setState(() {
-                  tasks.add(newTask);
-                });
-                saveTasks();
-              },
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddTaskPage(
+                onAddTask: (newTask) {
+                  setState(() {
+                    tasks.add(newTask);
+                  });
+                  saveTasks();
+                },
+              ),
             ),
-          ),
-        );
+          );
         },
         child: Icon(Icons.add),
       ),
@@ -180,9 +244,7 @@ class _TaskPageState extends State<TaskPage> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Image.asset(
-                  widget.equippedRock ?? 'assets/rock/rock01.png',
-                ),
+                Image.asset(widget.equippedRock ?? 'assets/rock/rock01.png'),
 
                 if (widget.equippedEyes != null)
                   Image.asset(widget.equippedEyes!),
@@ -202,21 +264,21 @@ class _TaskPageState extends State<TaskPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-
               // 👈 上一週
               IconButton(
                 icon: Icon(Icons.arrow_left),
                 onPressed: () {
                   setState(() {
                     weekOffset--;
+
+                    // 🔥 同步選中的日期（往前7天）
+                    selectedDate = selectedDate.subtract(Duration(days: 7));
                   });
                 },
               ),
 
               // 👇 日曆（只留這一個）
-              Expanded(
-                child: buildCalendar(),
-              ),
+              Expanded(child: buildCalendar()),
 
               // 👉 下一週
               IconButton(
@@ -224,6 +286,9 @@ class _TaskPageState extends State<TaskPage> {
                 onPressed: () {
                   setState(() {
                     weekOffset++;
+
+                    // 🔥 同步選中的日期（往後7天）
+                    selectedDate = selectedDate.add(Duration(days: 7));
                   });
                 },
               ),
@@ -231,10 +296,7 @@ class _TaskPageState extends State<TaskPage> {
           ),
 
           if (!isSameDay(DateTime.now().toString(), selectedDate))
-            ElevatedButton(
-              onPressed: goToToday,
-              child: Text("今天"),
-            ),
+            ElevatedButton(onPressed: goToToday, child: Text("今天")),
 
           SizedBox(height: 10),
 
@@ -243,9 +305,9 @@ class _TaskPageState extends State<TaskPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-            color: getTodayDoneTasks() == getTodayTotalTasks()
-              ? const Color.fromARGB(255, 234, 157, 4)
-              : Colors.black,
+              color: getTodayDoneTasks() == getTodayTotalTasks()
+                  ? const Color.fromARGB(255, 234, 157, 4)
+                  : Colors.black,
             ),
           ),
 
@@ -273,6 +335,23 @@ class _TaskPageState extends State<TaskPage> {
                   return SizedBox();
                 }
 
+                if (task["type"] == "custom") {
+                  List<int> days = List<int>.from(
+                    (task["customDays"] ?? []).map(
+                      (e) => int.parse(e.toString()),
+                    ),
+                  );
+
+                  int weekday = selectedDate.weekday;
+
+                  // 🔥 如果你有用 %7（週日=0），這裡要修正
+                  if (weekday == 0) weekday = 7;
+
+                  if (!days.contains(weekday)) {
+                    return SizedBox();
+                  }
+                }
+
                 bool isDone = task["doneDates"].contains(todayKey);
 
                 return Dismissible(
@@ -280,11 +359,11 @@ class _TaskPageState extends State<TaskPage> {
 
                   onDismissed: (direction) {
                     setState(() {
-                      if (task["type"] == "daily") {
-                        // 👉 每日任務：只隱藏今天
+                      if (task["type"] == "daily" || task["type"] == "custom") {
+                        // 👉 每日 / 自訂：只隱藏今天
                         task["hiddenDates"].add(todayKey);
-                      } else {
-                        // 👉 單次任務：真的刪掉
+                      } else if (task["type"] == "one-time") {
+                        // 👉 單次：真的刪掉
                         tasks.removeAt(index);
                       }
                     });
@@ -337,12 +416,21 @@ class _TaskPageState extends State<TaskPage> {
                         children: [
                           // 🔥 類型標籤（每日 / 單次）
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.black),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(task["type"] == "daily" ? "每日" : "單次"),
+                            child: Text(
+                              task["type"] == "daily"
+                                  ? "每日"
+                                  : task["type"] == "one-time"
+                                  ? "單次"
+                                  : "自訂",
+                            ),
                           ),
 
                           // 任務名稱
