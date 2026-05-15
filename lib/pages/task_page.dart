@@ -43,36 +43,47 @@ class _TaskPageState extends State<TaskPage> {
   Widget buildCalendar() {
     DateTime baseDate = selectedDate;
     DateTime startOfWeek = baseDate.subtract(
-      Duration(days: baseDate.weekday - 1),
+      Duration(days: baseDate.weekday % 7),
     );
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: List.generate(7, (index) {
-        DateTime day = startOfWeek.add(Duration(days: index));
-        bool isSelected = isSameDay(day.toString(), selectedDate);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 6), // 🔥 整體內縮
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(7, (index) {
+          DateTime day = startOfWeek.add(Duration(days: index));
+          bool isSelected =
+              day.year == selectedDate.year &&
+              day.month == selectedDate.month &&
+              day.day == selectedDate.day;
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedDate = day;
-            });
-          },
-          child: Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.orange : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedDate = day;
+              });
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color.fromARGB(255, 255, 217, 136)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Text(["日", "一", "二", "三", "四", "五", "六"][index]),
+                  Text(
+                    "${day.day}",
+                    style: TextStyle(fontSize: 12), // 🔥 防 overflow
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                Text(["一", "二", "三", "四", "五", "六", "日"][index]),
-                Text("${day.day}"),
-              ],
-            ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -145,6 +156,14 @@ class _TaskPageState extends State<TaskPage> {
     return "${date.year}-${date.month}-${date.day}";
   }
 
+  String formatCustomDays(List<int> days) {
+    List<String> weekMap = ["一", "二", "三", "四", "五", "六", "日"];
+
+    days.sort();
+
+    return "每週" + days.map((d) => weekMap[d - 1]).join("、");
+  }
+
   bool isSameDay(String dateStr, DateTime date) {
     DateTime taskDate = DateTime.parse(dateStr);
     return taskDate.year == date.year &&
@@ -196,7 +215,7 @@ class _TaskPageState extends State<TaskPage> {
                             }
 
                             if (newName.isEmpty) {
-                              newName = "俗頭養成記"; // 🔥 預設名稱
+                              newName = "我的俗頭"; // 🔥 預設名稱
                             }
 
                             widget.onRockNameChanged(newName);
@@ -217,99 +236,177 @@ class _TaskPageState extends State<TaskPage> {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskPage(
-                onAddTask: (newTask) {
-                  setState(() {
-                    tasks.add(newTask);
-                  });
-                  saveTasks();
-                },
+      floatingActionButton: SizedBox(
+        width: 56,
+        height: 56,
+        child: FloatingActionButton(
+          onPressed: () async {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddTaskPage(
+                  onAddTask: (newTask) {
+                    setState(() {
+                      tasks.add(newTask);
+                    });
+                    saveTasks();
+                  },
+                ),
               ),
-            ),
-          );
-        },
-        child: Icon(Icons.add),
+            );
+          },
+          backgroundColor: const Color.fromARGB(255, 255, 217, 136), // 🔥 改顏色
+          elevation: 2, // 🔥 陰影變淡（更精緻）
+          child: Icon(
+            Icons.add_rounded,
+            size: 25, // 🔥 icon 也縮小
+            color: Colors.black,
+          ),
+        ),
       ),
 
       body: Column(
         children: [
           SizedBox(
-            width: 330,
-            height: 330,
-            child: Stack(
-              alignment: Alignment.center,
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.35, // 🔥 關鍵：控制高度
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(widget.equippedRock ?? 'assets/rock/rock01.png'),
+                  if (widget.equippedEyes != null)
+                    Image.asset(widget.equippedEyes!),
+                  if (widget.equippedHat != null)
+                    Image.asset(widget.equippedHat!),
+                ],
+              ),
+            ),
+          ),
+
+          // SizedBox(height: 10),
+
+          // 👇 第一排：日期（左）＋點數（右）
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Image.asset(widget.equippedRock ?? 'assets/rock/rock01.png'),
+                // 🔹 左：日期 + ▼ + 今日
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
 
-                if (widget.equippedEyes != null)
-                  Image.asset(widget.equippedEyes!),
+                        if (picked != null) {
+                          setState(() {
+                            selectedDate = picked;
+                            weekOffset = 0;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Text(
+                            "${selectedDate.year}年${selectedDate.month}月",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down, size: 18),
+                        ],
+                      ),
+                    ),
 
-                if (widget.equippedHat != null)
-                  Image.asset(widget.equippedHat!),
+                    SizedBox(width: 8),
+
+                    // 👉 今日（只有不是今天才顯示）
+                    if (!isSameDay(DateTime.now().toString(), selectedDate))
+                      ElevatedButton(
+                        onPressed: goToToday,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 8,
+                          ), // 🔥 關鍵：縮左右
+                          minimumSize: Size(0, 0), // 🔥 不強制撐大
+                          tapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap, // 🔥 去掉多餘空間
+                        ),
+                        child: Text("今日", style: TextStyle(fontSize: 12)),
+                      ),
+                  ],
+                ),
+
+                // 🔹 右：點數
+                Text(
+                  "點數：${widget.points} pt",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
 
-          SizedBox(height: 10),
+          SizedBox(height: 15),
 
-          Text("點數：${widget.points}", style: TextStyle(fontSize: 20)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10), // 🔥 整體往內縮
+            child: Row(
+              children: [
+                // 👈 上一週
+                IconButton(
+                  icon: Icon(Icons.arrow_left),
+                  onPressed: () {
+                    setState(() {
+                      weekOffset--;
 
-          SizedBox(height: 10),
+                      // 🔥 同步選中的日期（往前7天）
+                      selectedDate = selectedDate.subtract(Duration(days: 7));
+                    });
+                  },
+                ),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // 👈 上一週
-              IconButton(
-                icon: Icon(Icons.arrow_left),
-                onPressed: () {
-                  setState(() {
-                    weekOffset--;
+                // 👇 日曆（只留這一個）
+                Expanded(child: buildCalendar()),
 
-                    // 🔥 同步選中的日期（往前7天）
-                    selectedDate = selectedDate.subtract(Duration(days: 7));
-                  });
-                },
-              ),
+                // 👉 下一週
+                IconButton(
+                  icon: Icon(Icons.arrow_right),
+                  onPressed: () {
+                    setState(() {
+                      weekOffset++;
 
-              // 👇 日曆（只留這一個）
-              Expanded(child: buildCalendar()),
-
-              // 👉 下一週
-              IconButton(
-                icon: Icon(Icons.arrow_right),
-                onPressed: () {
-                  setState(() {
-                    weekOffset++;
-
-                    // 🔥 同步選中的日期（往後7天）
-                    selectedDate = selectedDate.add(Duration(days: 7));
-                  });
-                },
-              ),
-            ],
+                      // 🔥 同步選中的日期（往後7天）
+                      selectedDate = selectedDate.add(Duration(days: 7));
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
 
-          if (!isSameDay(DateTime.now().toString(), selectedDate))
-            ElevatedButton(onPressed: goToToday, child: Text("今天")),
-
-          SizedBox(height: 10),
+          SizedBox(height: 15),
 
           Text(
             "今日完成：${getTodayDoneTasks()} / ${getTodayTotalTasks()}",
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: getTodayDoneTasks() == getTodayTotalTasks()
                   ? const Color.fromARGB(255, 234, 157, 4)
                   : Colors.black,
             ),
           ),
+
+          SizedBox(height: 12),
 
           Expanded(
             child: ListView.builder(
@@ -405,20 +502,21 @@ class _TaskPageState extends State<TaskPage> {
                     },
 
                     child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      padding: EdgeInsets.all(12),
+                      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                      padding: EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black, width: 2),
-                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.black, width: 1.5),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // 🔥 類型標籤（每日 / 單次）
+                          // 🔥 類型標籤（改成顯示內容）
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 10,
-                              vertical: 5,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.black),
@@ -429,7 +527,13 @@ class _TaskPageState extends State<TaskPage> {
                                   ? "每日"
                                   : task["type"] == "one-time"
                                   ? "單次"
-                                  : "自訂",
+                                  : formatCustomDays(
+                                      List<int>.from(
+                                        (task["customDays"] ?? []).map(
+                                          (e) => int.parse(e.toString()),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
 
@@ -451,10 +555,13 @@ class _TaskPageState extends State<TaskPage> {
 
                           // 按鈕
                           Column(
+                            mainAxisSize: MainAxisSize.min, // 🔥 不撐滿高度（超重要）
                             children: [
-                              Text("10pt"),
+                              // Text("10pt", style: TextStyle(fontSize: 12)),
                               IconButton(
-                                icon: Icon(Icons.check),
+                                constraints: BoxConstraints(), // 🔥 去掉預設大空間
+                                padding: EdgeInsets.zero,
+                                icon: Icon(Icons.check_rounded, size: 20),
                                 onPressed: () {
                                   if (!isDone) {
                                     setState(() {

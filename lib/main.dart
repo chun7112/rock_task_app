@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(
@@ -37,7 +38,7 @@ class _MainPageState extends State<MainPage> {
   int currentIndex = 0;
   int points = 0;
 
-  String rockName = "我的俗頭";
+  String rockName = "";
 
   String equippedRock = "assets/rock/rock01.png";
   String? equippedHat;
@@ -66,7 +67,7 @@ class _MainPageState extends State<MainPage> {
 
       equippedHat = hat.isEmpty ? null : hat;
       equippedEyes = eyes.isEmpty ? null : eyes;
-      rockName = prefs.getString('rockName') ?? "俗頭養成記";
+      rockName = prefs.getString('rockName') ?? "我的俗頭";
     });
   }
 
@@ -136,9 +137,9 @@ class _MainPageState extends State<MainPage> {
           });
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.check), label: "任務"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "月曆"),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "商店"),
+          BottomNavigationBarItem(icon: Icon(Icons.checklist_rtl_rounded), label: "任務"),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: "月曆"),
+          BottomNavigationBarItem(icon: Icon(Icons.local_grocery_store_rounded), label: "商店"),
         ],
       ),
     );
