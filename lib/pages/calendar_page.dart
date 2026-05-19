@@ -66,15 +66,14 @@ class _CalendarPageState extends State<CalendarPage> {
         continue;
       }
 
-      // 🔥 單次任務：只在建立那天
+      // 🔥 單次任務
       if (task["type"] == "one-time") {
-        if (task["createdDate"] != null) {
-          DateTime created = DateTime.parse(task["createdDate"]);
-          if (created.year == day.year &&
-              created.month == day.month &&
-              created.day == day.day) {
-            return true;
-          }
+        if (task["date"] == null) continue;
+
+        String dayKey = "${day.year}-${day.month}-${day.day}";
+
+        if (task["date"] == dayKey) {
+          return true;
         }
       }
 
@@ -128,15 +127,13 @@ class _CalendarPageState extends State<CalendarPage> {
         return false;
       }
 
-      // 🔥 單次任務
+      // 🔥 單次任務（用選擇的 date）
       if (task["type"] == "one-time") {
-        if (task["createdDate"] != null) {
-          DateTime created = DateTime.parse(task["createdDate"]);
-          return created.year == day.year &&
-              created.month == day.month &&
-              created.day == day.day;
-        }
-        return false;
+        if (task["date"] == null) return false;
+
+        String dayKey = "${day.year}-${day.month}-${day.day}";
+
+        return task["date"] == dayKey;
       }
 
       // 🔥 每日任務

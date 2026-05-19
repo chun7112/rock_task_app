@@ -97,10 +97,12 @@ class _TaskPageState extends State<TaskPage> {
         return false;
       }
 
-      if (task["type"] == "one-time" &&
-          task["createdDate"] != null &&
-          !isSameDay(task["createdDate"], selectedDate)) {
-        return false;
+      if (task["type"] == "one-time") {
+        if (task["date"] == null) return false;
+
+        String todayStr = getDateKey(selectedDate);
+
+        return task["date"] == todayStr;
       }
 
       return true;
@@ -153,8 +155,11 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   String getDateKey(DateTime date) {
-    return "${date.year}-${date.month}-${date.day}";
-  }
+  String month = date.month.toString().padLeft(2, '0');
+  String day = date.day.toString().padLeft(2, '0');
+
+  return "${date.year}-$month-$day";
+}
 
   String formatCustomDays(List<int> days) {
     List<String> weekMap = ["一", "二", "三", "四", "五", "六", "日"];
@@ -435,11 +440,15 @@ class _TaskPageState extends State<TaskPage> {
                   return SizedBox();
                 }
 
-                // 🔥 單次任務只顯示建立當天
-                if (task["type"] == "one-time" &&
-                    task["createdDate"] != null &&
-                    !isSameDay(task["createdDate"], selectedDate)) {
-                  return SizedBox();
+                // 🔥 單次任務 → 用「選擇的日期」
+                if (task["type"] == "one-time") {
+                  if (task["date"] == null) return SizedBox();
+
+                  String todayStr = getDateKey(selectedDate);
+
+                  if (task["date"] != todayStr) {
+                    return SizedBox();
+                  }
                 }
 
                 if (task["type"] == "custom") {

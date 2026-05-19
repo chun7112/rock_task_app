@@ -176,7 +176,13 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       }
 
                       // ✅ 👉🔥 新增這段（單次任務選日期）
-                      String? selectedDate;
+                      if (selectedType == "one-time" && selectedDate == null) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text("請選擇日期")));
+                        return;
+                      }
+
                       // 🔥🔥 加在這裡（限制至少選一天）
                       if (selectedType == "custom" && selectedDays.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
