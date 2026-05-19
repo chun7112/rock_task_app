@@ -34,9 +34,20 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> { 
+class _MainPageState extends State<MainPage> {
   int currentIndex = 0;
   int points = 0;
+
+  Future<void> savePoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('points', points);
+  }
+
+  // 🔥 載入 points
+  Future<void> loadPoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    points = prefs.getInt('points') ?? 0;
+  }
 
   Widget buildPoint(int p) {
     return Row(
@@ -54,6 +65,11 @@ class _MainPageState extends State<MainPage> {
   String equippedRock = "assets/rock/rock01.png";
   String? equippedHat;
   String? equippedEyes;
+
+  // Future<void> loadPoints() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   points = prefs.getInt('points') ?? 0;
+  // }
 
   Future<void> saveEquip() async {
     final prefs = await SharedPreferences.getInstance();
@@ -87,6 +103,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     loadEquip(); // 👈 載入裝備
+    loadPoints();
   }
 
   @override
@@ -108,6 +125,7 @@ class _MainPageState extends State<MainPage> {
           setState(() {
             points = newPoints;
           });
+          savePoints();
         },
 
         equippedRock: equippedRock,
@@ -121,6 +139,7 @@ class _MainPageState extends State<MainPage> {
           setState(() {
             points = newPoints;
           });
+          savePoints();
         },
         onEquip: (rock, hat, eyes) {
           setState(() {

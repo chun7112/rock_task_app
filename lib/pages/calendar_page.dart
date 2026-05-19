@@ -58,7 +58,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   bool hasTaskOnDay(DateTime day) {
-    String dayKey = "${day.year}-${day.month}-${day.day}";
+    String dayKey =
+        "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
 
     for (var task in tasks) {
       // 🔥 被隱藏就跳過
@@ -70,7 +71,8 @@ class _CalendarPageState extends State<CalendarPage> {
       if (task["type"] == "one-time") {
         if (task["date"] == null) continue;
 
-        String dayKey = "${day.year}-${day.month}-${day.day}";
+        String dayKey =
+            "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
 
         if (task["date"] == dayKey) {
           return true;
@@ -97,7 +99,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   bool isAllDoneOnDay(DateTime day) {
-    String dayKey = "${day.year}-${day.month}-${day.day}";
+    String dayKey =
+        "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
 
     var dayTasks = getTasksForDay(day);
 
@@ -115,7 +118,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   List<Map<String, dynamic>> getTasksForDay(DateTime day) {
-    String dayKey = "${day.year}-${day.month}-${day.day}";
+    String dayKey =
+        "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
 
     return tasks.where((task) {
       // 🔥 防呆
@@ -131,7 +135,8 @@ class _CalendarPageState extends State<CalendarPage> {
       if (task["type"] == "one-time") {
         if (task["date"] == null) return false;
 
-        String dayKey = "${day.year}-${day.month}-${day.day}";
+        String dayKey =
+            "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
 
         return task["date"] == dayKey;
       }
