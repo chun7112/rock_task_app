@@ -15,6 +15,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
   String selectedType = "daily"; // 👈 新增這行（控制選單）
 
   List<int> selectedDays = []; // 🔥 自訂星期（1~7）
+  String? selectedDate;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +82,22 @@ class _AddTaskPageState extends State<AddTaskPage> {
                     ),
                   ),
                 ),
+
+                // ✅ 單次任務 → 顯示日期選擇器
+                if (selectedType == "one-time") ...[
+                  SizedBox(height: 20),
+
+                  CalendarDatePicker(
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                    onDateChanged: (date) {
+                      setState(() {
+                        selectedDate = date.toString().substring(0, 10);
+                      });
+                    },
+                  ),
+                ],
                 SizedBox(height: 20),
 
                 // 🔥 自訂星期選擇（只有 custom 才顯示）
@@ -134,7 +151,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       tapTargetSize:
                           MaterialTapTargetSize.shrinkWrap, // 🔥 去多餘空間
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       // 🔥 空白防呆
                       if (controller.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -158,6 +175,8 @@ class _AddTaskPageState extends State<AddTaskPage> {
                         return;
                       }
 
+                      // ✅ 👉🔥 新增這段（單次任務選日期）
+                      String? selectedDate;
                       // 🔥🔥 加在這裡（限制至少選一天）
                       if (selectedType == "custom" && selectedDays.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,6 +205,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                         "doneDates": [],
                         "hiddenDates": [],
                         "createdDate": DateTime.now().toString(),
+                        "date": selectedDate,
                       };
 
                       // 👉 新增任務

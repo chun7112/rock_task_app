@@ -347,9 +347,19 @@ class _TaskPageState extends State<TaskPage> {
                 ),
 
                 // 🔹 右：點數
-                Text(
-                  "點數：${widget.points} pt",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.diamond, color: Colors.orange, size: 23),
+                    SizedBox(width: 4),
+                    Text(
+                      "${widget.points} pt",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -505,7 +515,7 @@ class _TaskPageState extends State<TaskPage> {
                       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
                       padding: EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black, width: 1.5),
+                        border: Border.all(color: Colors.black12, width: 1.5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -519,8 +529,8 @@ class _TaskPageState extends State<TaskPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.black),
-                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               task["type"] == "daily"

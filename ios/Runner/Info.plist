@@ -15,7 +15,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>rock_task_app</string>
+	<string>俗頭養成</string>
+	<key>CFBundleDisplayName</key>
+	<string>俗頭養成</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

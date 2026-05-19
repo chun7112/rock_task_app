@@ -34,9 +34,20 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> { 
   int currentIndex = 0;
   int points = 0;
+
+  Widget buildPoint(int p) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.diamond, size: 18, color: Colors.orange),
+        SizedBox(width: 4),
+        Text("$p pt"),
+      ],
+    );
+  }
 
   String rockName = "";
 
@@ -60,7 +71,8 @@ class _MainPageState extends State<MainPage> {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      equippedRock = prefs.getString('equippedRock') ?? "assets/rock/rock01.png";
+      equippedRock =
+          prefs.getString('equippedRock') ?? "assets/rock/rock01.png";
 
       String hat = prefs.getString('equippedHat') ?? '';
       String eyes = prefs.getString('equippedEyes') ?? '';
@@ -80,51 +92,54 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-    TaskPage(
-      points: points,
+      TaskPage(
+        points: points,
 
-      // 🔥👇 一定要加這兩個
-      rockName: rockName,
-      onRockNameChanged: (newName) {
-        setState(() {
-          rockName = newName;
-        });
-        saveRockName(); // 🔥 存本地
-      },
+        // 🔥👇 一定要加這兩個
+        rockName: rockName,
+        onRockNameChanged: (newName) {
+          setState(() {
+            rockName = newName;
+          });
+          saveRockName(); // 🔥 存本地
+        },
 
-      onPointsChanged: (newPoints) {
-        setState(() {
-          points = newPoints;
-        });
-      },
+        onPointsChanged: (newPoints) {
+          setState(() {
+            points = newPoints;
+          });
+        },
 
-      equippedRock: equippedRock,
-      equippedHat: equippedHat,
-      equippedEyes: equippedEyes,
-    ),
+        equippedRock: equippedRock,
+        equippedHat: equippedHat,
+        equippedEyes: equippedEyes,
+      ),
       CalendarPage(),
       ShopPage(
-      points: points,
-      onPointsChanged: (newPoints) {
-        setState(() {
-          points = newPoints;
-        });
-      },
-      onEquip: (rock, hat, eyes) {
-        setState(() {
-          if (rock != null)  {
-            equippedRock = rock;
-          }
+        points: points,
+        onPointsChanged: (newPoints) {
+          setState(() {
+            points = newPoints;
+          });
+        },
+        onEquip: (rock, hat, eyes) {
+          setState(() {
+            if (rock != null) {
+              equippedRock = rock;
+            }
 
-          equippedHat = hat;
-          equippedEyes = eyes;  
-        });
-        saveEquip();
-      },
-      equippedRock: equippedRock,
-      equippedHat: equippedHat,
-      equippedEyes: equippedEyes,
-    ),
+            equippedHat = hat;
+            equippedEyes = eyes;
+          });
+          saveEquip();
+        },
+
+        buildPoint: buildPoint,
+
+        equippedRock: equippedRock,
+        equippedHat: equippedHat,
+        equippedEyes: equippedEyes,
+      ),
     ];
 
     return Scaffold(
@@ -137,9 +152,18 @@ class _MainPageState extends State<MainPage> {
           });
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.checklist_rtl_rounded), label: "任務"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: "月曆"),
-          BottomNavigationBarItem(icon: Icon(Icons.local_grocery_store_rounded), label: "商店"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.checklist_rtl_rounded),
+            label: "任務",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_rounded),
+            label: "月曆",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_grocery_store_rounded),
+            label: "商店",
+          ),
         ],
       ),
     );

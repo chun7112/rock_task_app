@@ -6,16 +6,18 @@ class ShopPage extends StatefulWidget {
   final Function(int) onPointsChanged;
   final Function(String?, String?, String?) onEquip;
   final String? equippedRock;
-  final String? equippedHat; // 👈 新增
+  final String? equippedHat;
   final String? equippedEyes;
+  final Widget Function(int) buildPoint;
 
   const ShopPage({
     super.key,
     required this.points,
     required this.onPointsChanged,
     required this.onEquip,
+    required this.buildPoint,
     this.equippedRock,
-    this.equippedHat, // 👈 新增
+    this.equippedHat,
     this.equippedEyes,
   });
 
@@ -98,7 +100,20 @@ class _ShopPageState extends State<ShopPage> {
   ];
 
   void buyItem(String id, int price) {
-    if (widget.points >= price && !ownedItems.contains(id)) {
+    // ❌ 點數不足
+    if (widget.points < price) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("點數不足", style: TextStyle(color: Colors.white)),
+          duration: Duration(seconds: 1),
+          backgroundColor: Color.fromARGB(255, 239, 74, 20),
+        ),
+      );
+      return;
+    }
+
+    // ✅ 正常購買
+    if (!ownedItems.contains(id)) {
       setState(() {
         ownedItems.add(id);
       });
@@ -106,6 +121,14 @@ class _ShopPageState extends State<ShopPage> {
       saveOwnedItems();
 
       widget.onPointsChanged(widget.points - price);
+
+      // 🎉 成功提示（可選）
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("購買成功 🎉"),
+          duration: Duration(milliseconds: 800),
+        ),
+      );
     }
   }
 
@@ -251,9 +274,83 @@ class _ShopPageState extends State<ShopPage> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
 
-                        onPressed: () {
+                        onPressed: () async {
                           if (!owned) {
-                            buyItem(item["id"], item["price"]);
+                            bool? confirm = await showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+
+                                  // ✅ 標題置中
+                                  title: Center(
+                                    child: Text(
+                                      item["name"],
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // 👉 商品價格（只有 icon + 數字）
+                                      widget.buildPoint(item["price"]),
+
+                                      SizedBox(height: 10),
+
+                                      // 👉 當前點數（前面有「當前」）
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "目前持有 ",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              // color: const Color.fromARGB(255, 81, 81, 81),
+                                            ),
+                                          ),
+                                          widget.buildPoint(widget.points,),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  // ✅ 按鈕左右分開
+                                  actions: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // 左邊：取消
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context, false);
+                                          },
+                                          child: Text("取消"),
+                                        ),
+
+                                        // 右邊：購買
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context, true);
+                                          },
+                                          child: Text("購買"),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            // 👉 按了購買才繼續
+                            if (confirm == true) {
+                              buyItem(item["id"], item["price"]);
+                            }
                           } else {
                             // 👉 已裝備 → 卸下
                             if (isEquipped) {
