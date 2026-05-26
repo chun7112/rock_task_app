@@ -3,6 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/task_page.dart';
 import 'pages/shop_page.dart';
 import 'pages/calendar_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:rock_task_app/api_config.dart';
+import 'dart:math';
 
 void main() {
   runApp(const MyApp());
@@ -104,6 +108,54 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     loadEquip(); // 👈 載入裝備
     loadPoints();
+    checkDailyQuote();
+  }
+
+  Future<void> checkDailyQuote() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    String today = DateTime.now().toString().substring(0, 10);
+    String? lastShown = prefs.getString("last_quote_date");
+
+    // 👉 如果今天還沒顯示過
+    if (lastShown != today) {
+      List<String> fallbackQuotes = [
+        "今天也要加油 💪",
+        "慢慢來也沒關係",
+        "你已經很努力了"
+      ];
+
+      String quote = fallbackQuotes[Random().nextInt(fallbackQuotes.length)];
+
+      try {
+        final response = await http.get(Uri.parse("$baseUrl/quote"));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          quote = data["quote"];
+        }
+      } catch (e) {
+        print("quote error: $e");
+        // 👉 失敗就用 fallback（不用做事）
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("每日一句"),
+          content: Text(quote),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("知道了"),
+            ),
+          ],
+        ),
+      );
+
+      // 👉 記錄今天已顯示
+      await prefs.setString("last_quote_date", today);
+    }
   }
 
   @override

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:rock_task_app/api_config.dart';
 
 class AddTaskPage extends StatefulWidget {
   final Function(Map<String, dynamic>) onAddTask;
@@ -17,21 +20,58 @@ class _AddTaskPageState extends State<AddTaskPage> {
   List<int> selectedDays = []; // 🔥 自訂星期（1~7）
   String? selectedDate;
 
+  List<String> recommendTasks = [];
+
+  Future<void> fetchRecommend(String keyword) async {
+    try {
+      // 🔥 把關鍵字轉成你 Flask 用的
+      String goal = "other";
+
+      if (keyword.contains("睡") || keyword.contains("晚")) {
+        goal = "sleep";
+      } else if (keyword.contains("運動") ||
+          keyword.contains("健身") ||
+          keyword.contains("減肥")) {
+        goal = "exercise";
+      } else if (keyword.contains("讀") ||
+          keyword.contains("書") ||
+          keyword.contains("學") ||
+          keyword.contains("學習") ||
+          keyword.contains("唸")) {
+        goal = "study";
+      }
+
+      final response = await http.get(
+        Uri.parse("$baseUrl/recommend/${Uri.encodeComponent(keyword)}"),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          recommendTasks = List<String>.from(data["tasks"]);
+        });
+      }
+    } catch (e) {
+      print("API error: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true, //
         title: Text("新增任務"),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.check_rounded),
-            onPressed: () {
-              Navigator.pop(context); // 👈 手動離開
-            },
-          ),
-        ],
+        automaticallyImplyLeading: true,
+        // actions: [
+        //   IconButton(
+        //     icon: Icon(Icons.arrow_back_rounded),
+        //     onPressed: () {
+        //       Navigator.pop(context); // 👈 手動離開
+        //     },
+        //   ),
+        // ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -47,6 +87,17 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 // 輸入框
                 TextField(
                   controller: controller,
+                  onChanged: (text) {
+                    if (text.isNotEmpty) {
+                      fetchRecommend(text);
+                    }
+                    // 🔥 情況2：刪掉或太短 → 清空推薦
+                    else {
+                      setState(() {
+                        recommendTasks.clear();
+                      });
+                    }
+                  },
                   decoration: InputDecoration(
                     hintText: "輸入任務",
                     border: OutlineInputBorder(
@@ -60,6 +111,40 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 ),
 
                 SizedBox(height: 20),
+
+                // 🔥 推薦任務列表（橫排 + 自動換行）
+                if (recommendTasks.isNotEmpty) ...[
+                  SizedBox(height: 10),
+
+                  Wrap(
+                    spacing: 10, // 👉 左右間距
+                    runSpacing: 10, // 👉 上下間距
+                    children: recommendTasks.map((task) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            controller.text = task;
+                            recommendTasks.clear();
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(
+                              20,
+                            ), // 👉 圓角（重點🔥）
+                          ),
+                          child: Text(task, style: TextStyle(fontSize: 13)),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+                SizedBox(height: 12),
 
                 // 🔥👇 這就是你消失的「每日 / 單次選單」
                 Center(
