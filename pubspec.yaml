@@ -65,11 +65,20 @@ flutter:
     - assets/rock/
     - assets/hat/
     - assets/eyes/
+    - assets/body/
+    - assets/bg/
+    - assets/neck/
     - assets/shop_hat/
     - assets/shop_eyes/
+    - assets/shop_body/
+    - assets/shop_bg/
+    - assets/shop_neck/
     - assets/lock_hat/
     - assets/lock_eyes/
     - assets/lock_rock/
+    - assets/lock_body/
+    - assets/lock_bg/
+    - assets/lock_neck/
 
 
 

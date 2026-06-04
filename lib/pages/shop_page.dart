@@ -4,10 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ShopPage extends StatefulWidget {
   final int points;
   final Function(int) onPointsChanged;
-  final Function(String?, String?, String?) onEquip;
+  final Function(String?, String?, String?, String?, String?, String?) onEquip;
   final String? equippedRock;
   final String? equippedHat;
   final String? equippedEyes;
+  final String? equippedNeck;
+  final String? equippedBody;
+  final String? equippedBg;
   final Widget Function(int) buildPoint;
 
   const ShopPage({
@@ -19,6 +22,9 @@ class ShopPage extends StatefulWidget {
     this.equippedRock,
     this.equippedHat,
     this.equippedEyes,
+    this.equippedNeck,
+    this.equippedBody,
+    this.equippedBg,
   });
 
   @override
@@ -42,13 +48,16 @@ class _ShopPageState extends State<ShopPage> {
   }
 
   List<Map<String, dynamic>> shopItems = [
-    // 石頭
+    
+
+    // ===== 石頭 =====
     {
       "id": "rock02",
       "name": "火山岩",
       "type": "rock",
       "price": 300,
       "image": "assets/rock/rock02.png",
+      "previewImage": "assets/rock/rock02.png",
       "lockedImage": "assets/lock_rock/rock02_lock.png",
     },
     {
@@ -57,6 +66,7 @@ class _ShopPageState extends State<ShopPage> {
       "type": "rock",
       "price": 300,
       "image": "assets/rock/rock03.png",
+      "previewImage": "assets/rock/rock03.png",
       "lockedImage": "assets/lock_rock/rock03_lock.png",
     },
     {
@@ -65,6 +75,7 @@ class _ShopPageState extends State<ShopPage> {
       "type": "rock",
       "price": 300,
       "image": "assets/rock/rock04.png",
+      "previewImage": "assets/rock/rock04.png",
       "lockedImage": "assets/lock_rock/rock04_lock.png",
     },
     {
@@ -73,10 +84,11 @@ class _ShopPageState extends State<ShopPage> {
       "type": "rock",
       "price": 300,
       "image": "assets/rock/rock05.png",
+      "previewImage": "assets/rock/rock05.png",
       "lockedImage": "assets/lock_rock/rock05_lock.png",
     },
-
-    // 原本裝備
+    
+    // ===== 帽子 =====
     {
       "id": "hat1",
       "name": "沒有蝦兵但有蟹將",
@@ -87,7 +99,48 @@ class _ShopPageState extends State<ShopPage> {
       "lockedImage": "assets/lock_hat/hat01_lock.png",
     },
 
-    // 眼睛
+    // ===== 脖子 =====
+    
+
+    // ===== 身體 =====
+    {
+      "id": "body01",
+      "name": "合法合規",
+      "type": "body",
+      "price": 500,
+      "image": "assets/body/body01.png",
+      "previewImage": "assets/shop_body/body01_shop.png",
+      "lockedImage": "assets/lock_body/body01_lock.png",
+    },
+    {
+      "id": "body02",
+      "name": "亞當！！",
+      "type": "body",
+      "price": 500,
+      "image": "assets/body/body02.png",
+      "previewImage": "assets/shop_body/body02_shop.png",
+      "lockedImage": "assets/lock_body/body02_lock.png",
+    },
+    {
+      "id": "body03",
+      "name": "小黃上工",
+      "type": "body",
+      "price": 500,
+      "image": "assets/body/body03.png",
+      "previewImage": "assets/shop_body/body03_shop.png",
+      "lockedImage": "assets/lock_body/body03_lock.png",
+    },
+    {
+      "id": "body04",
+      "name": "小藍上工",
+      "type": "body",
+      "price": 500,
+      "image": "assets/body/body04.png",
+      "previewImage": "assets/shop_body/body04_shop.png",
+      "lockedImage": "assets/lock_body/body04_lock.png",
+    },
+
+    // ===== 眼睛 =====
     {
       "id": "eyes01",
       "name": "地震我看得見",
@@ -97,10 +150,39 @@ class _ShopPageState extends State<ShopPage> {
       "previewImage": "assets/shop_eyes/eyes01_shop.png",
       "lockedImage": "assets/lock_eyes/eyes01_lock.png",
     },
+    {
+      "id": "eyes02",
+      "name": "睡美人",
+      "type": "eyes",
+      "price": 500,
+      "image": "assets/eyes/eyes02.png",
+      "previewImage": "assets/shop_eyes/eyes02_shop.png",
+      "lockedImage": "assets/lock_eyes/eyes02_lock.png",
+    },
+    // ===== 背景 =====
+    {
+      "id": "bg01",
+      "name": "Checkmate??",
+      "type": "bg",
+      "price": 500,
+      "image": "assets/bg/bg01.png",
+      "previewImage": "assets/shop_bg/bg01_shop.png",
+      "lockedImage": "assets/lock_bg/bg01_lock.png",
+    },
+    {
+      "id": "bg02",
+      "name": "Boooom",
+      "type": "bg",
+      "price": 500,
+      "image": "assets/bg/bg02.png",
+      "previewImage": "assets/shop_bg/bg02_shop.png",
+      "lockedImage": "assets/lock_bg/bg02_lock.png",
+    },
+
   ];
 
   void buyItem(String id, int price) {
-    // ❌ 點數不足
+    // 點數不足
     if (widget.points < price) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -112,7 +194,7 @@ class _ShopPageState extends State<ShopPage> {
       return;
     }
 
-    // ✅ 正常購買
+    // 正常購買
     if (!ownedItems.contains(id)) {
       setState(() {
         ownedItems.add(id);
@@ -122,7 +204,7 @@ class _ShopPageState extends State<ShopPage> {
 
       widget.onPointsChanged(widget.points - price);
 
-      // 🎉 成功提示（可選）
+      // 成功提示
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("購買成功 🎉"),
@@ -144,32 +226,40 @@ class _ShopPageState extends State<ShopPage> {
   void initState() {
     super.initState();
 
-    loadOwnedItems(); // 👈 載入你存的資料
+    loadOwnedItems(); // 載入存的資料
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("商店")),
+      appBar: AppBar(centerTitle: true,title: Text("商店")),
       body: Column(
         children: [
-          // ===== 分類按鈕 =====
+          // 分類按鈕
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16), // 🔥 左右留白
+            padding: EdgeInsets.symmetric(horizontal: 30),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  buildCategoryButton("all", "全部"),
-                  SizedBox(width: 8),
-
-                  buildCategoryButton("rock", "石頭"),
-                  SizedBox(width: 8),
-
-                  buildCategoryButton("hat", "帽子"),
-                  SizedBox(width: 8),
-
-                  buildCategoryButton("eyes", "眼睛"),
+                  // 分類資料
+                  ...[
+                    {"key": "all", "label": "全部"},
+                    {"key": "rock", "label": "石頭"},
+                    {"key": "hat", "label": "帽子"},
+                    {"key": "eyes", "label": "眼睛"},
+                    {"key": "neck", "label": "脖子"},
+                    {"key": "body", "label": "身體"},
+                    {"key": "bg", "label": "背景"},
+                  ].map((category) {
+                    return Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: buildCategoryButton(
+                        category["key"]!,
+                        category["label"]!,
+                      ),
+                    );
+                  }).toList(),
                 ],
               ),
             ),
@@ -180,14 +270,14 @@ class _ShopPageState extends State<ShopPage> {
             child: GridView.builder(
               padding: EdgeInsets.symmetric(
                 horizontal:
-                    MediaQuery.of(context).size.width * 0.05, // 🔥 自適應左右
+                    MediaQuery.of(context).size.width * 0.05,
                 vertical: 10,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 👉 一排2個（可改3）
+                crossAxisCount: 2, // 一排2個
                 crossAxisSpacing: 15,
                 mainAxisSpacing: 15,
-                childAspectRatio: 0.75, // 👉 卡片比例
+                childAspectRatio: 0.75, // 卡片比例
               ),
               itemCount: getFilteredItems().length,
               itemBuilder: (context, index) {
@@ -202,6 +292,12 @@ class _ShopPageState extends State<ShopPage> {
                   isEquipped = widget.equippedHat == item["image"];
                 } else if (item["type"] == "eyes") {
                   isEquipped = widget.equippedEyes == item["image"];
+                } else if (item["type"] == "neck") {
+                  isEquipped = widget.equippedNeck == item["image"];
+                } else if (item["type"] == "body") {
+                  isEquipped = widget.equippedBody == item["image"];
+                } else if (item["type"] == "bg") {
+                  isEquipped = widget.equippedBg == item["image"];
                 }
 
                 return Container(
@@ -209,8 +305,8 @@ class _ShopPageState extends State<ShopPage> {
                     border: Border.all(
                       color: isEquipped
                           ? const Color.fromARGB(255, 246, 184, 69)
-                          : Colors.black, // 👈 高亮
-                      width: isEquipped ? 4 : 2, // 👈 變粗
+                          : Colors.black,
+                      width: isEquipped ? 4 : 2,
                     ),
                     borderRadius: BorderRadius.circular(15),
                     color: isEquipped
@@ -220,7 +316,7 @@ class _ShopPageState extends State<ShopPage> {
                             241,
                             135,
                           ).withOpacity(0.1)
-                        : null, // 👈 淡底色（可選）
+                        : null,
                   ),
                   padding: EdgeInsets.all(8),
 
@@ -247,7 +343,7 @@ class _ShopPageState extends State<ShopPage> {
                           ),
                         ),
 
-                      // 👇 圖片
+                      // 圖片
                       Flexible(
                         child: Image.asset(
                           owned
@@ -257,13 +353,13 @@ class _ShopPageState extends State<ShopPage> {
                         ),
                       ),
 
-                      // 👇 名稱
+                      // 名稱
                       Text(item["name"] ?? item["id"]),
 
-                      // 👇 價格
+                      // 價格
                       Text("${item["price"]} pt"),
 
-                      // 👇 按鈕
+                      // 按鈕
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(
@@ -284,7 +380,7 @@ class _ShopPageState extends State<ShopPage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
 
-                                  // ✅ 標題置中
+                                  // 標題置中
                                   title: Center(
                                     child: Text(
                                       item["name"],
@@ -297,12 +393,12 @@ class _ShopPageState extends State<ShopPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
-                                      // 👉 商品價格（只有 icon + 數字）
+                                      // 商品價格（只有 icon + 數字）
                                       widget.buildPoint(item["price"]),
 
                                       SizedBox(height: 10),
 
-                                      // 👉 當前點數（前面有「當前」）
+                                      // 當前點數
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
@@ -314,12 +410,11 @@ class _ShopPageState extends State<ShopPage> {
                                               // color: const Color.fromARGB(255, 81, 81, 81),
                                             ),
                                           ),
-                                          widget.buildPoint(widget.points,),
+                                          widget.buildPoint(widget.points),
                                         ],
                                       ),
                                     ],
                                   ),
-                                  // ✅ 按鈕左右分開
                                   actions: [
                                     Row(
                                       mainAxisAlignment:
@@ -347,52 +442,125 @@ class _ShopPageState extends State<ShopPage> {
                               },
                             );
 
-                            // 👉 按了購買才繼續
+                            // 
                             if (confirm == true) {
                               buyItem(item["id"], item["price"]);
                             }
                           } else {
-                            // 👉 已裝備 → 卸下
+                            // 已裝備 → 卸下
                             if (isEquipped) {
                               if (item["type"] == "rock") {
                                 widget.onEquip(
                                   "assets/rock/rock01.png",
                                   widget.equippedHat,
                                   widget.equippedEyes,
+                                  widget.equippedNeck,
+                                  widget.equippedBody,
+                                  widget.equippedBg,
                                 );
                               } else if (item["type"] == "hat") {
                                 widget.onEquip(
                                   widget.equippedRock,
                                   null,
                                   widget.equippedEyes,
+                                  widget.equippedNeck,
+                                  widget.equippedBody,
+                                  widget.equippedBg,
                                 );
                               } else if (item["type"] == "eyes") {
                                 widget.onEquip(
                                   widget.equippedRock,
                                   widget.equippedHat,
                                   null,
+                                  widget.equippedNeck,
+                                  widget.equippedBody,
+                                  widget.equippedBg,
+                                );
+                              } else if (item["type"] == "neck") {
+                                widget.onEquip(
+                                  widget.equippedRock,
+                                  widget.equippedHat,
+                                  widget.equippedEyes,
+                                  null,
+                                  widget.equippedBody,
+                                  widget.equippedBg,
+                                );
+                              } else if (item["type"] == "body") {
+                                widget.onEquip(
+                                  widget.equippedRock,
+                                  widget.equippedHat,
+                                  widget.equippedEyes,
+                                  widget.equippedNeck,
+                                  null,
+                                  widget.equippedBg,
+                                );
+                              } else if (item["type"] == "bg") {
+                                widget.onEquip(
+                                  widget.equippedRock,
+                                  widget.equippedHat,
+                                  widget.equippedEyes,
+                                  widget.equippedNeck,
+                                  widget.equippedBody,
+                                  null,
                                 );
                               }
+
                               return;
                             }
 
-                            // 👉 裝備
+                            // 裝備
                             if (item["type"] == "rock") {
                               widget.onEquip(
                                 item["image"],
                                 widget.equippedHat,
                                 widget.equippedEyes,
+                                widget.equippedNeck,
+                                widget.equippedBody,
+                                widget.equippedBg,
                               );
                             } else if (item["type"] == "hat") {
                               widget.onEquip(
                                 widget.equippedRock,
                                 item["image"],
                                 widget.equippedEyes,
+                                widget.equippedNeck,
+                                widget.equippedBody,
+                                widget.equippedBg,
                               );
                             } else if (item["type"] == "eyes") {
                               widget.onEquip(
                                 widget.equippedRock,
                                 widget.equippedHat,
+                                item["image"],
+                                widget.equippedNeck,
+                                widget.equippedBody,
+                                widget.equippedBg,
+                              );
+                            } else if (item["type"] == "neck") {
+                              widget.onEquip(
+                                widget.equippedRock,
+                                widget.equippedHat,
+                                widget.equippedEyes,
+                                item["image"],
+                                widget.equippedBody,
+                                widget.equippedBg,
+                              );
+                            } else if (item["type"] == "body") {
+                              widget.onEquip(
+                                widget.equippedRock,
+                                widget.equippedHat,
+                                widget.equippedEyes,
+                                widget.equippedNeck,
+                                item["image"],
+                                widget.equippedBg,
+                              );
+                            } else if (item["type"] == "bg") {
+                              widget.onEquip(
+                                widget.equippedRock,
+                                widget.equippedHat,
+                                widget.equippedEyes,
+                                widget.equippedNeck,
+                                widget.equippedBody,
                                 item["image"],
                               );
                             }
@@ -423,7 +591,7 @@ class _ShopPageState extends State<ShopPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       child: SizedBox(
-        height: 34, // 🔥 控制高度（原本太大）
+        height: 34,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: isSelected
@@ -431,9 +599,9 @@ class _ShopPageState extends State<ShopPage> {
                 : const Color.fromARGB(255, 255, 244, 222),
             foregroundColor: isSelected ? Colors.white : Colors.black,
 
-            padding: EdgeInsets.symmetric(horizontal: 16), // 🔥 控制寬度
-            minimumSize: Size(0, 0), // 🔥 不強制撐開
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 🔥 去多餘空間
+            padding: EdgeInsets.symmetric(horizontal: 16), 
+            minimumSize: Size(0, 0), 
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap, 
           ),
           onPressed: () {
             setState(() {
@@ -442,7 +610,7 @@ class _ShopPageState extends State<ShopPage> {
           },
           child: Text(
             label,
-            style: TextStyle(fontSize: 13), // 🔥 字縮小
+            style: TextStyle(fontSize: 13),
           ),
         ),
       ),

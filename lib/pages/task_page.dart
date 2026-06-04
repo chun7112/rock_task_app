@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'add_task_page.dart';
+import 'package:http/http.dart' as http;
+import '../api_config.dart';
+import 'login_page.dart';
 
 class TaskPage extends StatefulWidget {
   final int points;
-  final String rockName; // 🔥 新增
+  final String rockName;
   final Function(String) onRockNameChanged;
   final String? equippedRock;
   final String? equippedHat;
   final String? equippedEyes;
+  final String? equippedNeck;
+  final String? equippedBody;
+  final String? equippedBg;
   final Function(int) onPointsChanged;
 
   const TaskPage({
@@ -21,6 +27,9 @@ class TaskPage extends StatefulWidget {
     this.equippedRock,
     this.equippedHat,
     this.equippedEyes,
+    this.equippedNeck,
+    this.equippedBody,
+    this.equippedBg,
   });
 
   @override
@@ -31,12 +40,17 @@ class _TaskPageState extends State<TaskPage> {
   List<Map<String, dynamic>> tasks = [];
   DateTime selectedDate = DateTime.now();
 
+  String username = "";
+
   int weekOffset = 0;
+
+  int currentStreak = 0;
+  int bestStreak = 0;
 
   void goToToday() {
     setState(() {
       selectedDate = DateTime.now();
-      weekOffset = 0; // 👈 很重要：週也要歸零
+      weekOffset = 0;
     });
   }
 
@@ -47,7 +61,7 @@ class _TaskPageState extends State<TaskPage> {
     );
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 6), // 🔥 整體內縮
+      padding: EdgeInsets.symmetric(horizontal: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(7, (index) {
@@ -74,10 +88,7 @@ class _TaskPageState extends State<TaskPage> {
               child: Column(
                 children: [
                   Text(["日", "一", "二", "三", "四", "五", "六"][index]),
-                  Text(
-                    "${day.day}",
-                    style: TextStyle(fontSize: 12), // 🔥 防 overflow
-                  ),
+                  Text("${day.day}", style: TextStyle(fontSize: 12)),
                 ],
               ),
             ),
@@ -87,8 +98,12 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
+  String? equippedRock;
   String? equippedHat;
   String? equippedEyes;
+  String? equippedNeck;
+  String? equippedBody;
+  String? equippedBg;
 
   int getTodayTotalTasks() {
     return tasks.where((task) {
@@ -116,7 +131,6 @@ class _TaskPageState extends State<TaskPage> {
     }).length;
   }
 
-  /// 存 tasks（points 不存了，交給 MainPage）
   Future<void> saveTasks() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('tasks', jsonEncode(tasks));
@@ -145,21 +159,65 @@ class _TaskPageState extends State<TaskPage> {
     setState(() {});
   }
 
+  Future<void> loadStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    String username = prefs.getString("username") ?? "";
+
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/streak/$username"));
+
+      print("status: ${response.statusCode}");
+      print("body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          currentStreak = data["current_streak"];
+          bestStreak = data["best_streak"];
+        });
+
+        print("目前連續: $currentStreak");
+        print("最高連續: $bestStreak");
+      }
+    } catch (e) {
+      print("streak error: $e");
+    }
+  }
+
+  Future<void> loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      username = prefs.getString("username") ?? "";
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    loadTasks();
 
-    equippedHat = 'assets/rock2.png';
-    equippedEyes = 'assets/rock3.png';
+    // ===== 先給預設（防爆）=====
+    equippedRock = 'assets/rock/rock01.png';
+    equippedHat = null;
+    equippedEyes = null;
+    equippedNeck = null;
+    equippedBody = null;
+    equippedBg = null;
+
+    // ===== 再載入資料（會覆蓋）=====
+    loadTasks();
+    // ===== 讀取連續簽到 =====
+    loadStreak();
+    loadUsername();
   }
 
   String getDateKey(DateTime date) {
-  String month = date.month.toString().padLeft(2, '0');
-  String day = date.day.toString().padLeft(2, '0');
+    String month = date.month.toString().padLeft(2, '0');
+    String day = date.day.toString().padLeft(2, '0');
 
-  return "${date.year}-$month-$day";
-}
+    return "${date.year}-$month-$day";
+  }
 
   String formatCustomDays(List<int> days) {
     List<String> weekMap = ["一", "二", "三", "四", "五", "六", "日"];
@@ -183,14 +241,14 @@ class _TaskPageState extends State<TaskPage> {
         centerTitle: true,
 
         title: Row(
-          mainAxisSize: MainAxisSize.min, // 🔥 讓整塊只包內容（很重要）
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               widget.rockName,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
 
-            SizedBox(width: 6), // 👉 字跟icon間距
+            const SizedBox(width: 6),
 
             GestureDetector(
               onTap: () {
@@ -234,11 +292,39 @@ class _TaskPageState extends State<TaskPage> {
                   },
                 );
               },
-
               child: Icon(Icons.edit, size: 18),
             ),
           ],
         ),
+
+        actions: [
+          PopupMenuButton<String>(
+            padding: EdgeInsets.zero,
+            icon: const Icon(Icons.account_circle),
+
+            onSelected: (value) async {
+              if (value == "logout") {
+                final prefs = await SharedPreferences.getInstance();
+
+                await prefs.remove("username");
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+              }
+            },
+
+            itemBuilder: (context) => [
+              PopupMenuItem(enabled: false, child: Text("帳號：$username")),
+
+              const PopupMenuDivider(),
+
+              const PopupMenuItem(value: "logout", child: Text("登出")),
+            ],
+          ),
+        ],
       ),
 
       floatingActionButton: SizedBox(
@@ -280,9 +366,26 @@ class _TaskPageState extends State<TaskPage> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  // 🟢 背景（最底）
+                  if (widget.equippedBg != null)
+                    Image.asset(widget.equippedBg!),
+
+                  // 🟢 石頭（主體）
                   Image.asset(widget.equippedRock ?? 'assets/rock/rock01.png'),
+
+                  // 🟢 身體
+                  if (widget.equippedBody != null)
+                    Image.asset(widget.equippedBody!),
+
+                  // 🟢 脖子
+                  if (widget.equippedNeck != null)
+                    Image.asset(widget.equippedNeck!),
+
+                  // 🟢 眼睛
                   if (widget.equippedEyes != null)
                     Image.asset(widget.equippedEyes!),
+
+                  // 🟢 帽子（最上）
                   if (widget.equippedHat != null)
                     Image.asset(widget.equippedHat!),
                 ],
@@ -351,18 +454,46 @@ class _TaskPageState extends State<TaskPage> {
                   ],
                 ),
 
-                // 🔹 右：點數
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // // 🔹 右：點數
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Icon(Icons.diamond, color: Colors.orange, size: 23),
+                //     SizedBox(width: 4),
+                //     Text(
+                //       "${widget.points} pt",
+                //       style: TextStyle(
+                //         fontSize: 16,
+                //         fontWeight: FontWeight.bold,
+                //       ),
+                //     ),
+                //   ],
+                // ),
+
+                // 🔹 右：點數 + streak
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Icon(Icons.diamond, color: Colors.orange, size: 23),
-                    SizedBox(width: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.diamond, color: Colors.orange, size: 23),
+                        SizedBox(width: 4),
+                        Text(
+                          "${widget.points} pt",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 2),
+
                     Text(
-                      "${widget.points} pt",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      "🔥連續 $currentStreak 天",
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
