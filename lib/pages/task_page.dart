@@ -146,8 +146,6 @@ class _TaskPageState extends State<TaskPage> {
       for (var task in tasks) {
         task["doneDates"] ??= [];
         task["hiddenDates"] ??= [];
-
-        // 🔥🔥🔥 這段是關鍵（修 customDays 型別）
         if (task["type"] == "custom") {
           task["customDays"] = (task["customDays"] ?? [])
               .map((e) => int.parse(e.toString()))

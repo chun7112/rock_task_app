@@ -21,14 +21,16 @@ class _LoginPageState extends State<LoginPage> {
     print("===== LOGIN CLICK =====");
 
     try {
-      final response = await http.post(
-        Uri.parse("$baseUrl/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": usernameController.text,
-          "password": passwordController.text,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/login"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "username": usernameController.text,
+              "password": passwordController.text,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
       print("LOGIN STATUS = ${response.statusCode}");
       print("LOGIN BODY = ${response.body}");
@@ -51,8 +53,9 @@ class _LoginPageState extends State<LoginPage> {
           context,
         ).showSnackBar(SnackBar(content: Text(data["message"])));
       }
-    } catch (e) {
-      print(e);
+    } catch (e, s) {
+      print("LOGIN ERROR = $e");
+      print(s);
     }
   }
 
